@@ -14,6 +14,7 @@ export default function scene(node: HTMLDivElement) {
         0.1,
         1000
     );
+	
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.autoRotate = true;
     controls.enableDamping = true;
