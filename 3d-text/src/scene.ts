@@ -36,9 +36,11 @@ export default async function scene(node: HTMLDivElement) {
     });
     textGeometry.center();
 
-    const texture = new THREE.TextureLoader().load(
-        './src/assets/texture/gradient.jpg'
+    const textureLoader = new THREE.TextureLoader().setPath(
+        './src/assets/texture/'
     );
+
+    const texture = textureLoader.load('gradient.jpg');
     const textMaterial = new THREE.MeshPhongMaterial({
         map: texture,
     });
@@ -60,12 +62,16 @@ export default async function scene(node: HTMLDivElement) {
 
     const spotLight = new THREE.SpotLight(
         0xffffff,
-        50,
+        200,
         30,
         Math.PI * 0.1,
         0.4,
-        1
+        0.4
     );
+
+    const spotLightTexture = textureLoader.load('astronomy.jpg');
+    spotLight.map = spotLightTexture;
+
     spotLight.position.set(0, 6, 3);
     spotLight.target.position.set(0, 0, -2);
     spotLight.castShadow = true;
