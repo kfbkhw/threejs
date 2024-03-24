@@ -2,11 +2,11 @@ import * as THREE from 'three';
 import { FontLoader } from 'three/examples/jsm/Addons.js';
 import { TextGeometry } from 'three/examples/jsm/Addons.js';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
-import GUI from 'three/examples/jsm/libs/lil-gui.module.min.js';
 
-export default function scene(node: HTMLDivElement) {
+export default async function scene(node: HTMLDivElement) {
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
     node.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
@@ -16,53 +16,68 @@ export default function scene(node: HTMLDivElement) {
         0.1,
         1000
     );
+    camera.position.set(0, 1, 5);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-
-    const loader = new FontLoader();
-    loader.load(
-        './src/assets/fonts/BlackHanSans_Regular.json',
-        (font) => {
-            const textGeometry = new TextGeometry('Hello, world!', {
-                font,
-                size: 0.5,
-                height: 0.1,
-            });
-            textGeometry.computeBoundingBox();
-            textGeometry.translate(
-                -(
-                    (textGeometry.boundingBox!.max.x -
-                        textGeometry.boundingBox!.min.x) /
-                    2
-                ),
-                0,
-                0
-            );
-
-            const textMaterial = new THREE.MeshPhongMaterial({
-                color: 0x378ce7,
-            });
-            const text = new THREE.Mesh(textGeometry, textMaterial);
-            scene.add(text);
-        },
-        (evt) => console.log('progress', evt),
-        (err) => console.log('error', err)
-    );
-
-    camera.position.set(0, 0, 5);
     controls.update();
 
-    const directionalLight = new THREE.DirectionalLight(0xf0f0f0, 10);
-    directionalLight.position.set(0, 10, 1);
-    scene.add(directionalLight);
+    const font = await new FontLoader().loadAsync(
+        './src/assets/fonts/BlackHanSans_Regular.json'
+    );
+    const textGeometry = new TextGeometry('Hello, world!', {
+        font,
+        size: 0.5,
+        height: 0.1,
+        bevelEnabled: true,
+        bevelSegments: 10,
+        bevelSize: 0.01,
+        bevelThickness: 0.01,
+    });
+    textGeometry.center();
+
+    const texture = new THREE.TextureLoader().load(
+        './src/assets/texture/gradient.jpg'
+    );
+    const textMaterial = new THREE.MeshPhongMaterial({
+        map: texture,
+    });
+
+    const text = new THREE.Mesh(textGeometry, textMaterial);
+    text.castShadow = true;
+    scene.add(text);
+
+    const planeGeometry = new THREE.PlaneGeometry(200, 200);
+    const planeMaterial = new THREE.MeshPhongMaterial({ color: 0x000000 });
+
+    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+    plane.position.setZ(-1);
+    plane.receiveShadow = true;
+    scene.add(plane);
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 1);
     scene.add(ambientLight);
 
-    const pointLight = new THREE.PointLight(0xf0f0f0, 5);
-    pointLight.position.set(5, 5, 5);
-    scene.add(pointLight);
+    const spotLight = new THREE.SpotLight(
+        0xffffff,
+        50,
+        30,
+        Math.PI * 0.1,
+        0.4,
+        1
+    );
+    spotLight.position.set(0, 6, 3);
+    spotLight.target.position.set(0, 0, -2);
+    spotLight.castShadow = true;
+    spotLight.shadow.mapSize.width = 1024;
+    spotLight.shadow.mapSize.height = 1024;
+    scene.add(spotLight, spotLight.target);
+
+    window.addEventListener('mousemove', (evt) => {
+        const x = evt.clientX / window.innerWidth - 0.5;
+        const y = (evt.clientY / window.innerHeight - 0.5) * -1;
+        spotLight.position.set(x * 20, y * 20, 3);
+    });
 
     function animate() {
         requestAnimationFrame(animate);
@@ -77,9 +92,4 @@ export default function scene(node: HTMLDivElement) {
         camera.updateProjectionMatrix();
     }
     window.addEventListener('resize', resize);
-
-    const gui = new GUI();
-    gui.add(pointLight.position, 'x', -10, 10, 0.1);
-    gui.add(pointLight.position, 'y', -10, 10, 0.1);
-    gui.add(pointLight.position, 'z', -10, 10, 0.1);
 }
