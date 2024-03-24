@@ -2,6 +2,9 @@ import * as THREE from 'three';
 import { FontLoader } from 'three/examples/jsm/Addons.js';
 import { TextGeometry } from 'three/examples/jsm/Addons.js';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
+import { EffectComposer } from 'three/examples/jsm/Addons.js';
+import { RenderPass } from 'three/examples/jsm/Addons.js';
+import { UnrealBloomPass } from 'three/examples/jsm/Addons.js';
 
 export default async function scene(node: HTMLDivElement) {
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -85,10 +88,22 @@ export default async function scene(node: HTMLDivElement) {
         spotLight.position.set(x * 20, y * 20, 3);
     });
 
+    const composer = new EffectComposer(renderer);
+    const renderPass = new RenderPass(scene, camera);
+    const unrealBloomPass = new UnrealBloomPass(
+        new THREE.Vector2(window.innerWidth, window.innerHeight),
+        0.2,
+        0,
+        0
+    );
+
+    composer.addPass(renderPass);
+    composer.addPass(unrealBloomPass);
+
     function animate() {
         requestAnimationFrame(animate);
+        composer.render();
         controls.update();
-        renderer.render(scene, camera);
     }
     animate();
 
