@@ -1,7 +1,9 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/Addons.js';
+import Card from './card';
 
 export default function scene(node: HTMLDivElement) {
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     node.appendChild(renderer.domElement);
 
@@ -12,29 +14,39 @@ export default function scene(node: HTMLDivElement) {
         0.1,
         1000
     );
+    camera.position.setZ(25);
 
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({ color: 0x378ce7 });
-    const cube = new THREE.Mesh(geometry, material);
-    scene.add(cube);
+    const control = new OrbitControls(camera, renderer.domElement);
+    control.autoRotate = true;
+    control.enableDamping = true;
+    control.minPolarAngle = Math.PI / 4;
+    control.maxPolarAngle = Math.PI - Math.PI / 4;
+    control.update();
 
-    camera.position.set(0, 0, 5);
-    camera.lookAt(cube.position);
+    const card = new Card({
+        width: 10,
+        height: 15.8,
+        radius: 0.5,
+        color: 0x0077ff,
+    }).card;
+    card.rotateZ(Math.PI * 0.01);
+    scene.add(card);
 
-    const directionalLight = new THREE.DirectionalLight(0xf0f0f0, 5);
-    directionalLight.position.set(-5, 8, 5);
-    scene.add(directionalLight);
-
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+    const ambientLight = new THREE.AmbientLight(0xffffff);
     scene.add(ambientLight);
 
-    function animate() {
-        requestAnimationFrame(animate);
-        cube.rotation.x += 0.01;
-        cube.rotation.y += 0.01;
+    const directionalLight1 = new THREE.DirectionalLight(0xffffff);
+    const directionalLight2 = directionalLight1.clone();
+    directionalLight1.position.set(1, 1, 5);
+    directionalLight2.position.set(-1, 1, -5);
+    scene.add(directionalLight1, directionalLight2);
+
+    function render() {
+        requestAnimationFrame(render);
         renderer.render(scene, camera);
+        control.update();
     }
-    animate();
+    render();
 
     function resize() {
         renderer.setSize(window.innerWidth, window.innerHeight);
