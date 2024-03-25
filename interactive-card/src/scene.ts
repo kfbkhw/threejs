@@ -27,7 +27,6 @@ export default function scene(node: HTMLDivElement) {
         width: 10,
         height: 15.8,
         radius: 0.5,
-        color: 0x0077ff,
     }).card;
     card.rotateZ(Math.PI * 0.01);
     scene.add(card);
@@ -35,7 +34,7 @@ export default function scene(node: HTMLDivElement) {
     const ambientLight = new THREE.AmbientLight(0xffffff);
     scene.add(ambientLight);
 
-    const directionalLight1 = new THREE.DirectionalLight(0xffffff);
+    const directionalLight1 = new THREE.DirectionalLight(0xffffff, 2);
     const directionalLight2 = directionalLight1.clone();
     directionalLight1.position.set(1, 1, 5);
     directionalLight2.position.set(-1, 1, -5);
@@ -54,4 +53,6 @@ export default function scene(node: HTMLDivElement) {
         camera.updateProjectionMatrix();
     }
     window.addEventListener('resize', resize);
+
+    return card.material as THREE.MeshStandardMaterial;
 }

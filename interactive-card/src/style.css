@@ -7,3 +7,27 @@
     -webkit-user-modify: none;
     -webkit-user-drag: none;
 }
+
+.color-buttons {
+    position: absolute;
+    bottom: 3rem;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2rem;
+}
+
+.color-button {
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.color-button.selected {
+    outline: 2px solid #dadada;
+    box-shadow: 0 0 8px 1px #b1b1b1;
+}

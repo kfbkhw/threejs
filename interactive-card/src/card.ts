@@ -4,13 +4,12 @@ interface CardProps {
     width: number;
     height: number;
     radius: number;
-    color: number;
 }
 
 export default class Card {
     card: THREE.Mesh;
 
-    constructor({ width, height, radius, color }: CardProps) {
+    constructor({ width, height, radius }: CardProps) {
         const x = width / 2 - radius;
         const y = height / 2 - radius;
 
@@ -33,7 +32,6 @@ export default class Card {
 
         const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
         const material = new THREE.MeshStandardMaterial({
-            color,
             side: THREE.DoubleSide,
             roughness: 0.5,
             metalness: 0.5,
