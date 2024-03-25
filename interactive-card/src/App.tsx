@@ -1,12 +1,12 @@
 import { useRef, useEffect, useState } from 'react';
+import { Mesh, MeshStandardMaterial, Color } from 'three';
 import scene from './scene';
 import { CARD_COLORS } from './colors';
-import { MeshStandardMaterial, Color } from 'three';
 
 function App() {
     const initialized = useRef(false);
     const containerRef = useRef<HTMLDivElement>(null);
-    const cardRef = useRef<MeshStandardMaterial>();
+    const cardRef = useRef<Mesh>();
     const [selectedColor, setSelectedColor] = useState(CARD_COLORS[0]);
 
     useEffect(() => {
@@ -26,8 +26,10 @@ function App() {
                 button.classList.remove('selected');
             }
         });
-        const card = cardRef.current as MeshStandardMaterial;
-        card.color = new Color(selectedColor);
+
+        const card = cardRef.current as Mesh;
+        const cardMaterial = card.material as MeshStandardMaterial;
+        cardMaterial.color = new Color(selectedColor);
     }, [selectedColor]);
 
     return (
@@ -36,6 +38,7 @@ function App() {
             <div className="color-buttons">
                 {CARD_COLORS.map((color) => (
                     <button
+                        key={color}
                         className="color-button"
                         style={{ backgroundColor: color }}
                         onClick={() => setSelectedColor(color)}

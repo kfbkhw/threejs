@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
+import { gsap } from 'gsap';
 import Card from './card';
 
 export default function scene(node: HTMLDivElement) {
@@ -28,7 +29,8 @@ export default function scene(node: HTMLDivElement) {
         height: 15.8,
         radius: 0.5,
     }).card;
-    card.rotateZ(Math.PI * 0.01);
+    card.rotateZ(Math.PI * 0.05);
+    gsap.to(card.rotation, { y: Math.PI * 3, duration: 1 });
     scene.add(card);
 
     const ambientLight = new THREE.AmbientLight(0xffffff);
@@ -36,8 +38,8 @@ export default function scene(node: HTMLDivElement) {
 
     const directionalLight1 = new THREE.DirectionalLight(0xffffff, 2);
     const directionalLight2 = directionalLight1.clone();
-    directionalLight1.position.set(1, 1, 5);
-    directionalLight2.position.set(-1, 1, -5);
+    directionalLight1.position.set(1, 1, 3);
+    directionalLight2.position.set(-1, 1, -3);
     scene.add(directionalLight1, directionalLight2);
 
     function render() {
@@ -54,5 +56,5 @@ export default function scene(node: HTMLDivElement) {
     }
     window.addEventListener('resize', resize);
 
-    return card.material as THREE.MeshStandardMaterial;
+    return card as THREE.Mesh;
 }
