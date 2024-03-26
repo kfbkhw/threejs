@@ -3,16 +3,23 @@ import scene from './scene';
 
 function App() {
     const initialized = useRef(false);
-    const containerRef = useRef<HTMLDivElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
         if (!initialized.current) {
             initialized.current = true;
-            scene(containerRef.current as HTMLDivElement);
+            scene(canvasRef.current as HTMLCanvasElement);
         }
     }, []);
 
-    return <div ref={containerRef}></div>;
+    return (
+        <>
+            <header>
+                <h1>Three.js Scroll Animation</h1>
+            </header>
+            <canvas id="canvas" ref={canvasRef}></canvas>
+        </>
+    );
 }
 
 export default App;
