@@ -1,12 +1,15 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/examples/jsm/Addons.js';
 
-export default function scene(canvas: HTMLCanvasElement) {
+export default async function scene(canvas: HTMLCanvasElement) {
     const renderer = new THREE.WebGLRenderer({
         antialias: true,
         alpha: true,
         canvas,
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
 
     const scene = new THREE.Scene();
     scene.fog = new THREE.Fog(0xf0f0f0, 0.1, 500);
@@ -18,11 +21,17 @@ export default function scene(canvas: HTMLCanvasElement) {
     );
     camera.position.set(0, 25, 150);
 
+    const control = new OrbitControls(camera, renderer.domElement);
+    control.minPolarAngle = Math.PI / 4;
+    control.maxPolarAngle = Math.PI / 2.3;
+    control.update();
+
     const waveGeometry = new THREE.PlaneGeometry(1500, 1500, 150, 150);
     const waveMaterial = new THREE.MeshStandardMaterial({
         color: 0x00ffff,
     });
     const wave = new THREE.Mesh(waveGeometry, waveMaterial);
+    wave.receiveShadow = true;
     wave.rotateX(-Math.PI / 2);
     const waveHeight = 3;
     const initialZ: number[] = [];
@@ -43,6 +52,20 @@ export default function scene(canvas: HTMLCanvasElement) {
             waveGeometry.attributes.position.setZ(i, z);
         }
         waveGeometry.attributes.position.needsUpdate = true;
+    };
+
+    const gltfLoader = new GLTFLoader();
+    const gltf = await gltfLoader.loadAsync('./src/models/ship/scene.gltf');
+    const ship = gltf.scene;
+    const shipHeight = 6;
+    ship.rotateY(Math.PI);
+    ship.position.setY(shipHeight);
+    ship.scale.set(0.1, 0.1, 0.1);
+    scene.add(ship);
+
+    const updateShip = () => {
+        const elapsedTime = clock.getElapsedTime();
+        ship.position.setY(Math.sin(elapsedTime * 3) + shipHeight);
     };
 
     const pointLight = new THREE.PointLight(0xffffff, 2);
@@ -66,6 +89,8 @@ export default function scene(canvas: HTMLCanvasElement) {
     function render() {
         requestAnimationFrame(render);
         updateWave();
+        updateShip();
+        camera.lookAt(ship.position);
         renderer.render(scene, camera);
     }
     render();
