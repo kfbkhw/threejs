@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/Addons.js';
 
 export default function scene(node: HTMLDivElement) {
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -13,6 +14,29 @@ export default function scene(node: HTMLDivElement) {
         1000
     );
     camera.position.set(0, 0, 5);
+
+    const control = new OrbitControls(camera, renderer.domElement);
+    control.update();
+
+    const textureCube = new THREE.CubeTextureLoader()
+        .setPath('./src/assets/textures/yokohama/')
+        .load([
+            'posx.jpg',
+            'negx.jpg',
+            'posy.jpg',
+            'negy.jpg',
+            'posz.jpg',
+            'negz.jpg',
+        ]);
+    scene.background = textureCube;
+
+    const geometry = new THREE.SphereGeometry(1);
+    const material = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        envMap: textureCube,
+    });
+    const sphere = new THREE.Mesh(geometry, material);
+    scene.add(sphere);
 
     const directionalLight = new THREE.DirectionalLight(0xf0f0f0, 5);
     directionalLight.position.set(-5, 8, 5);
