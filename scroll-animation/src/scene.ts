@@ -209,8 +209,8 @@ export default async function scene(canvas: HTMLCanvasElement) {
             '.title',
             {
                 opacity: 1,
-                duration: 1.5,
+                duration: 0.5,
             },
-            '<'
+            '-=0.5'
         );
 }
