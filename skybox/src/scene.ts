@@ -16,6 +16,7 @@ export default function scene(node: HTMLDivElement) {
     camera.position.set(0, 0, 5);
 
     const control = new OrbitControls(camera, renderer.domElement);
+    control.enableDamping = true;
     control.update();
 
     const textureCube = new THREE.CubeTextureLoader()
@@ -32,22 +33,15 @@ export default function scene(node: HTMLDivElement) {
 
     const geometry = new THREE.SphereGeometry(1);
     const material = new THREE.MeshBasicMaterial({
-        color: 0xffffff,
         envMap: textureCube,
     });
     const sphere = new THREE.Mesh(geometry, material);
     scene.add(sphere);
 
-    const directionalLight = new THREE.DirectionalLight(0xf0f0f0, 5);
-    directionalLight.position.set(-5, 8, 5);
-    scene.add(directionalLight);
-
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
-    scene.add(ambientLight);
-
     function animate() {
         requestAnimationFrame(animate);
         renderer.render(scene, camera);
+        control.update();
     }
     animate();
 
