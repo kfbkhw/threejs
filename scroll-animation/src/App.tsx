@@ -14,10 +14,9 @@ function App() {
 
     return (
         <>
-            <header>
-                <h1>Three.js Scroll Animation</h1>
-            </header>
             <canvas id="canvas" ref={canvasRef}></canvas>
+            <h1 className="title">Three.js Scroll Animation</h1>
+            <div className="scroll"></div>
         </>
     );
 }

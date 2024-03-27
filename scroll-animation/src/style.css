@@ -11,10 +11,18 @@
     -webkit-user-drag: none;
 }
 
-header {
-    padding-top: 100px;
+.scroll {
+    position: relative;
+    min-height: 1000vh;
+}
+
+.title {
+    position: fixed;
+    top: 100px;
+    width: 100%;
     text-align: center;
-    font-size: 24px;
+    font-size: 40px;
+    color: #008dda;
 }
 
 #canvas {
