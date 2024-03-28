@@ -15,7 +15,7 @@ export default async function scene(node: HTMLDivElement, onLoad: () => void) {
         0.1,
         1000
     );
-    camera.position.set(0, 100, 200);
+    camera.position.set(0, 50, 220);
 
     const control = new OrbitControls(camera, renderer.domElement);
     control.enableDamping = true;
@@ -47,6 +47,45 @@ export default async function scene(node: HTMLDivElement, onLoad: () => void) {
     });
     scene.add(model);
 
+    const mixer = new THREE.AnimationMixer(model);
+    const defaultAction = mixer.clipAction(gltf.animations[0]);
+    let currentAction = defaultAction;
+    currentAction.clampWhenFinished = true;
+    currentAction.play();
+
+    const $combatAction = document.getElementById(
+        'combat-action'
+    ) as HTMLDivElement;
+    const $danceAction = document.getElementById(
+        'dance-action'
+    ) as HTMLDivElement;
+    ($combatAction.querySelector('h2') as HTMLHeadingElement).innerHTML =
+        'Combat';
+    ($danceAction.querySelector('h2') as HTMLHeadingElement).innerHTML =
+        'Dance';
+
+    const actions = gltf.animations.slice(1);
+    for (let i = 0; i < actions.length; i++) {
+        const button = document.createElement('button');
+        button.innerHTML = actions[i].name;
+        button.onclick = () => {
+            const prevAction = currentAction;
+            currentAction = mixer.clipAction(actions[i]);
+            if (prevAction === currentAction && prevAction.isRunning()) {
+                return;
+            }
+            prevAction.fadeOut(1);
+            currentAction.reset().setLoop(THREE.LoopRepeat, 2).fadeIn(1).play();
+        };
+        if (i < 4) {
+            button.classList.add('combat-action-btn');
+            $combatAction.appendChild(button);
+        } else {
+            button.classList.add('dance-action-btn');
+            $danceAction.appendChild(button);
+        }
+    }
+
     const planeGeometry = new THREE.PlaneGeometry(10000, 10000);
     const planeMaterial = new THREE.MeshPhongMaterial({
         color: 0x000000,
@@ -59,8 +98,8 @@ export default async function scene(node: HTMLDivElement, onLoad: () => void) {
 
     const spotLight = new THREE.SpotLight(
         0xffffff,
-        50,
-        0,
+        60,
+        1000,
         Math.PI * 0.15,
         0.5,
         0.5
@@ -73,16 +112,24 @@ export default async function scene(node: HTMLDivElement, onLoad: () => void) {
     scene.add(spotLight);
 
     const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x333333);
-    hemisphereLight.position.set(0, 20, 10);
+    hemisphereLight.position.set(0, -50, 10);
     scene.add(hemisphereLight);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
     scene.add(ambientLight);
 
+    const clock = new THREE.Clock();
+
     function animate() {
+        const delta = clock.getDelta();
         requestAnimationFrame(animate);
         renderer.render(scene, camera);
         control.update();
+        mixer.update(delta);
+        if (!currentAction.isRunning()) {
+            currentAction = defaultAction;
+            currentAction.reset().fadeIn(1).play();
+        }
     }
     animate();
 

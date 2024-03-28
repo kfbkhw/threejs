@@ -24,6 +24,14 @@ function App() {
     return (
         <>
             <div ref={containerRef}></div>
+            <div className="animation-buttons">
+                <div className="action-buttons" id="combat-action">
+                    <h2></h2>
+                </div>
+                <div className="action-buttons" id="dance-action">
+                    <h2></h2>
+                </div>
+            </div>
             {isLoading && (
                 <div id="loader">
                     <label htmlFor="loading-progress">Loading...</label>
