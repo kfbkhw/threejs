@@ -1,6 +1,8 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-export default function scene(node: HTMLDivElement) {
+export default async function scene(node: HTMLDivElement) {
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     node.appendChild(renderer.domElement);
@@ -12,27 +14,42 @@ export default function scene(node: HTMLDivElement) {
         0.1,
         1000
     );
+    camera.position.set(0, 100, 200);
 
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({ color: 0x378ce7 });
-    const cube = new THREE.Mesh(geometry, material);
-    scene.add(cube);
+    const control = new OrbitControls(camera, renderer.domElement);
+    control.update();
 
-    camera.position.set(0, 0, 5);
-    camera.lookAt(cube.position);
+    const loadingManager = new THREE.LoadingManager();
+    loadingManager.onStart = (_url, loaded, total) => {
+        console.log('start: ' + loaded / total);
+    };
+    loadingManager.onProgress = (_url, loaded, total) => {
+        console.log('progress: ' + loaded / total);
+    };
+    loadingManager.onLoad = () => {
+        console.log('finish loading');
+    };
+    loadingManager.onError = (url) => {
+        console.log('There was an error loading ' + url);
+    };
 
-    const directionalLight = new THREE.DirectionalLight(0xf0f0f0, 5);
-    directionalLight.position.set(-5, 8, 5);
+    const gltf = await new GLTFLoader(loadingManager).loadAsync(
+        './src/models/amy.gltf'
+    );
+    const model = gltf.scene;
+    scene.add(model);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
+    directionalLight.position.set(-5, 10, 5);
     scene.add(directionalLight);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+    const ambientLight = new THREE.AmbientLight(0xffffff);
     scene.add(ambientLight);
 
     function animate() {
         requestAnimationFrame(animate);
-        cube.rotation.x += 0.01;
-        cube.rotation.y += 0.01;
         renderer.render(scene, camera);
+        control.update();
     }
     animate();
 
