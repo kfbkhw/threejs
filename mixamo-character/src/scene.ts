@@ -86,6 +86,14 @@ export default async function scene(node: HTMLDivElement, onLoad: () => void) {
         }
     }
 
+    const handleAnimationFinished = () => {
+        const prevAction = currentAction;
+        currentAction = defaultAction;
+        prevAction.fadeOut(1);
+        currentAction.reset().fadeIn(1).play();
+    };
+    mixer.addEventListener('finished', handleAnimationFinished);
+
     const planeGeometry = new THREE.PlaneGeometry(10000, 10000);
     const planeMaterial = new THREE.MeshPhongMaterial({
         color: 0x000000,
@@ -119,17 +127,12 @@ export default async function scene(node: HTMLDivElement, onLoad: () => void) {
     scene.add(ambientLight);
 
     const clock = new THREE.Clock();
-
     function animate() {
         const delta = clock.getDelta();
         requestAnimationFrame(animate);
         renderer.render(scene, camera);
         control.update();
         mixer.update(delta);
-        if (!currentAction.isRunning()) {
-            currentAction = defaultAction;
-            currentAction.reset().fadeIn(1).play();
-        }
     }
     animate();
 
@@ -139,4 +142,25 @@ export default async function scene(node: HTMLDivElement, onLoad: () => void) {
         camera.updateProjectionMatrix();
     }
     window.addEventListener('resize', resize);
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    let targetObject: THREE.Mesh | null;
+    const onPointerDown = (event: MouseEvent) => {
+        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+        pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(pointer, camera);
+        const intersects = raycaster.intersectObjects(scene.children);
+        const object = intersects[0]?.object as THREE.Mesh;
+        if (targetObject) {
+            (targetObject.material as THREE.MeshStandardMaterial).color.set(
+                0xffffff
+            );
+            targetObject = null;
+        } else if (object?.name === 'Ch46') {
+            targetObject = object;
+            (object.material as THREE.MeshStandardMaterial).color.set(0x5755fe);
+        }
+    };
+    window.addEventListener('pointerdown', onPointerDown);
 }
