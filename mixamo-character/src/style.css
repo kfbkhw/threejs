@@ -11,6 +11,10 @@
     -webkit-user-drag: none;
 }
 
+body {
+    background-color: #000000;
+}
+
 canvas {
     cursor: pointer;
 }
