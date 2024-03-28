@@ -25,6 +25,7 @@ export default async function scene(node: HTMLDivElement, onLoad: () => void) {
     control.maxPolarAngle = Math.PI * 0.55;
     control.update();
 
+    // -------------- Loading Manager -------------- //
     const $progressBar = document.getElementById(
         'loading-progress'
     ) as HTMLProgressElement;
@@ -35,6 +36,17 @@ export default async function scene(node: HTMLDivElement, onLoad: () => void) {
     loadingManager.onLoad = () => {
         onLoad();
     };
+
+    // -------------- Mesh Objects -------------- //
+    const planeGeometry = new THREE.PlaneGeometry(10000, 10000);
+    const planeMaterial = new THREE.MeshPhongMaterial({
+        color: 0x000000,
+    });
+    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+    plane.rotateX(-Math.PI / 2);
+    plane.position.setY(-75);
+    plane.receiveShadow = true;
+    scene.add(plane);
 
     const gltf = await new GLTFLoader(loadingManager).loadAsync(
         './src/models/amy.gltf'
@@ -47,6 +59,30 @@ export default async function scene(node: HTMLDivElement, onLoad: () => void) {
     });
     scene.add(model);
 
+    // -------------- Lights -------------- //
+    const spotLight = new THREE.SpotLight(
+        0xffffff,
+        60,
+        1000,
+        Math.PI * 0.15,
+        0.5,
+        0.5
+    );
+    spotLight.position.setY(150);
+    spotLight.castShadow = true;
+    spotLight.shadow.mapSize.width = 1024;
+    spotLight.shadow.mapSize.height = 1024;
+    spotLight.shadow.radius = 2;
+    scene.add(spotLight);
+
+    const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x333333);
+    hemisphereLight.position.set(0, -50, 10);
+    scene.add(hemisphereLight);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+    scene.add(ambientLight);
+
+    // -------------- Animation Mixer -------------- //
     const mixer = new THREE.AnimationMixer(model);
     const defaultAction = mixer.clipAction(gltf.animations[0]);
     let currentAction = defaultAction;
@@ -94,47 +130,16 @@ export default async function scene(node: HTMLDivElement, onLoad: () => void) {
     };
     mixer.addEventListener('finished', handleAnimationFinished);
 
-    const planeGeometry = new THREE.PlaneGeometry(10000, 10000);
-    const planeMaterial = new THREE.MeshPhongMaterial({
-        color: 0x000000,
-    });
-    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-    plane.rotateX(-Math.PI / 2);
-    plane.position.setY(-75);
-    plane.receiveShadow = true;
-    scene.add(plane);
-
-    const spotLight = new THREE.SpotLight(
-        0xffffff,
-        60,
-        1000,
-        Math.PI * 0.15,
-        0.5,
-        0.5
-    );
-    spotLight.position.setY(150);
-    spotLight.castShadow = true;
-    spotLight.shadow.mapSize.width = 1024;
-    spotLight.shadow.mapSize.height = 1024;
-    spotLight.shadow.radius = 2;
-    scene.add(spotLight);
-
-    const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x333333);
-    hemisphereLight.position.set(0, -50, 10);
-    scene.add(hemisphereLight);
-
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
-    scene.add(ambientLight);
-
+    // -------------- Render & Resize -------------- //
     const clock = new THREE.Clock();
-    function animate() {
+    function render() {
         const delta = clock.getDelta();
-        requestAnimationFrame(animate);
+        requestAnimationFrame(render);
         renderer.render(scene, camera);
         control.update();
         mixer.update(delta);
     }
-    animate();
+    render();
 
     function resize() {
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -143,6 +148,7 @@ export default async function scene(node: HTMLDivElement, onLoad: () => void) {
     }
     window.addEventListener('resize', resize);
 
+    // -------------- Raycaster -------------- //
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
     let targetObject: THREE.Mesh | null;
