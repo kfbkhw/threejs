@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-export default async function scene(node: HTMLDivElement) {
+export default async function scene(node: HTMLDivElement, onLoad: () => void) {
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     node.appendChild(renderer.domElement);
@@ -19,18 +19,15 @@ export default async function scene(node: HTMLDivElement) {
     const control = new OrbitControls(camera, renderer.domElement);
     control.update();
 
+    const $progressBar = document.getElementById(
+        'loading-progress'
+    ) as HTMLProgressElement;
     const loadingManager = new THREE.LoadingManager();
-    loadingManager.onStart = (_url, loaded, total) => {
-        console.log('start: ' + loaded / total);
-    };
     loadingManager.onProgress = (_url, loaded, total) => {
-        console.log('progress: ' + loaded / total);
+        $progressBar.value = loaded / total;
     };
     loadingManager.onLoad = () => {
-        console.log('finish loading');
-    };
-    loadingManager.onError = (url) => {
-        console.log('There was an error loading ' + url);
+        onLoad();
     };
 
     const gltf = await new GLTFLoader(loadingManager).loadAsync(
