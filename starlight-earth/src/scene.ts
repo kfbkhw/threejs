@@ -7,7 +7,6 @@ import { FilmPass } from 'three/examples/jsm/postprocessing/FilmPass.js';
 import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { AfterimagePass } from 'three/examples/jsm/postprocessing/AfterimagePass.js';
-import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js';
 
 export default function scene(node: HTMLDivElement) {
@@ -176,14 +175,6 @@ export default function scene(node: HTMLDivElement) {
 
     const afterimagePass = new AfterimagePass(0.96);
     composer.addPass(afterimagePass);
-
-    const unrealBloomPass = new UnrealBloomPass(
-        new THREE.Vector2(window.innerWidth, window.innerHeight),
-        1,
-        1,
-        0.9
-    );
-    composer.addPass(unrealBloomPass);
 
     const smaaPass = new SMAAPass(window.innerWidth, window.innerHeight);
     composer.addPass(smaaPass);
