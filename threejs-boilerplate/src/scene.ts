@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/Addons.js';
 
 export default function scene(node: HTMLDivElement) {
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -12,29 +13,32 @@ export default function scene(node: HTMLDivElement) {
         0.1,
         1000
     );
-
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({ color: 0x378ce7 });
-    const cube = new THREE.Mesh(geometry, material);
-    scene.add(cube);
-
     camera.position.set(0, 0, 5);
-    camera.lookAt(cube.position);
 
-    const directionalLight = new THREE.DirectionalLight(0xf0f0f0, 5);
+    const control = new OrbitControls(camera, renderer.domElement);
+    control.enableDamping = true;
+
+    // -------------- Mesh Objects -------------- //
+    const geometry = new THREE.BoxGeometry();
+    const material = new THREE.MeshBasicMaterial();
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+
+    // -------------- Lights -------------- //
+    const directionalLight = new THREE.DirectionalLight();
     directionalLight.position.set(-5, 8, 5);
     scene.add(directionalLight);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+    const ambientLight = new THREE.AmbientLight();
     scene.add(ambientLight);
 
-    function animate() {
-        requestAnimationFrame(animate);
-        cube.rotation.x += 0.01;
-        cube.rotation.y += 0.01;
+    // -------------- Render & Resize -------------- //
+    function render() {
+        requestAnimationFrame(render);
         renderer.render(scene, camera);
+        control.update();
     }
-    animate();
+    render();
 
     function resize() {
         renderer.setSize(window.innerWidth, window.innerHeight);
