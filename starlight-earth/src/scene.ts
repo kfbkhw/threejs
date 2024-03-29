@@ -1,10 +1,24 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/Addons.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { FilmPass } from 'three/examples/jsm/postprocessing/FilmPass.js';
+import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { AfterimagePass } from 'three/examples/jsm/postprocessing/AfterimagePass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass.js';
+import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js';
 
 export default function scene(node: HTMLDivElement) {
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     node.appendChild(renderer.domElement);
+    const renderTarget = new THREE.WebGLRenderTarget(
+        window.innerWidth,
+        window.innerHeight
+    );
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
@@ -68,25 +82,26 @@ export default function scene(node: HTMLDivElement) {
     };
 
     const createPole = () => {
-        const geometry = new THREE.CylinderGeometry(0.005, 0.005, 4.8);
-        const material = new THREE.MeshStandardMaterial({
-            transparent: true,
-            opacity: 0.5,
-        });
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.rotateZ(Math.PI * -0.1);
-        scene.add(mesh);
-        return mesh;
-    };
+        const poleGeometry = new THREE.CylinderGeometry(0.005, 0.005, 4.8);
+        poleGeometry.rotateZ(Math.PI * -0.1);
+        const ringGeometry = new THREE.TorusGeometry(
+            2.4,
+            0.005,
+            120,
+            480,
+            Math.PI
+        );
+        ringGeometry.rotateZ(Math.PI * -0.6);
 
-    const createPoleRing = () => {
-        const geometry = new THREE.TorusGeometry(2.4, 0.005, 120, 480, Math.PI);
+        const geometry = BufferGeometryUtils.mergeGeometries([
+            poleGeometry,
+            ringGeometry,
+        ]);
         const material = new THREE.MeshStandardMaterial({
             transparent: true,
             opacity: 0.5,
         });
         const mesh = new THREE.Mesh(geometry, material);
-        mesh.rotateZ(Math.PI * -0.6);
         scene.add(mesh);
         return mesh;
     };
@@ -135,7 +150,6 @@ export default function scene(node: HTMLDivElement) {
     const earthLg = createEarthLg(earthTexture);
     const earthSm = createEarthSm(earthTexture);
     createPole();
-    createPoleRing();
     const ring = createRing();
     const stars = createStars(starTexture, 1000);
 
@@ -143,10 +157,44 @@ export default function scene(node: HTMLDivElement) {
     const ambientLight = new THREE.AmbientLight(0xffffff, 3);
     scene.add(ambientLight);
 
+    // -------------- Post Processing -------------- //
+    const composer = new EffectComposer(renderer, renderTarget);
+
+    const renderPass = new RenderPass(scene, camera);
+    composer.addPass(renderPass);
+
+    const filmPass = new FilmPass(0.1, false);
+    composer.addPass(filmPass);
+
+    const shaderPass = new ShaderPass(GammaCorrectionShader);
+    composer.addPass(shaderPass);
+
+    const afterimagePass = new AfterimagePass(0.96);
+    composer.addPass(afterimagePass);
+
+    const unrealBloomPass = new UnrealBloomPass(
+        new THREE.Vector2(window.innerWidth, window.innerHeight),
+        1,
+        1,
+        0.9
+    );
+    composer.addPass(unrealBloomPass);
+
+    const outlinePass = new OutlinePass(
+        new THREE.Vector2(window.innerWidth, window.innerHeight),
+        scene,
+        camera
+    );
+    outlinePass.selectedObjects = [];
+    composer.addPass(outlinePass);
+
+    const smaaPass = new SMAAPass(window.innerWidth, window.innerHeight);
+    composer.addPass(smaaPass);
+
     // -------------- Render & Resize -------------- //
     function render() {
         requestAnimationFrame(render);
-        renderer.render(scene, camera);
+        composer.render();
         control.update();
         earthLg.rotation.y += 0.0005;
         earthSm.rotation.y -= 0.0005;
