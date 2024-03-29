@@ -8,7 +8,6 @@ import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectio
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { AfterimagePass } from 'three/examples/jsm/postprocessing/AfterimagePass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
-import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass.js';
 import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js';
 
 export default function scene(node: HTMLDivElement) {
@@ -31,6 +30,12 @@ export default function scene(node: HTMLDivElement) {
 
     const control = new OrbitControls(camera, renderer.domElement);
     control.enableDamping = true;
+    control.minAzimuthAngle = -Math.PI / 4;
+    control.maxAzimuthAngle = Math.PI / 4;
+    control.minPolarAngle = Math.PI / 3;
+    control.maxPolarAngle = (Math.PI * 2) / 3;
+    control.minDistance = 2;
+    control.maxDistance = 10;
 
     // -------------- Textures -------------- //
     const textureLoader = new THREE.TextureLoader().setPath(
@@ -180,14 +185,6 @@ export default function scene(node: HTMLDivElement) {
     );
     composer.addPass(unrealBloomPass);
 
-    const outlinePass = new OutlinePass(
-        new THREE.Vector2(window.innerWidth, window.innerHeight),
-        scene,
-        camera
-    );
-    outlinePass.selectedObjects = [];
-    composer.addPass(outlinePass);
-
     const smaaPass = new SMAAPass(window.innerWidth, window.innerHeight);
     composer.addPass(smaaPass);
 
@@ -200,9 +197,9 @@ export default function scene(node: HTMLDivElement) {
         earthSm.rotation.y -= 0.0005;
         ring.rotation.x -= 0.005;
         ring.rotation.y -= 0.005;
-        stars.rotation.x += 0.0001;
-        stars.rotation.y += 0.0001;
-        stars.rotation.z += 0.0001;
+        stars.rotation.x += 0.0004;
+        stars.rotation.y += 0.0004;
+        stars.rotation.z += 0.0004;
     }
     render();
 
