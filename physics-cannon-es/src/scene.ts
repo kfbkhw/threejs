@@ -25,6 +25,7 @@ export default function scene(node: HTMLDivElement) {
         mesh: THREE.Mesh;
         body: CANNON.Body;
         id?: string;
+        force?: number[];
     }
 
     const worldObjects: WorldObjects[] = [];
@@ -45,7 +46,12 @@ export default function scene(node: HTMLDivElement) {
     world.addContactMaterial(contactMaterial);
 
     // -------------- Mesh Objects -------------- //
-    const createSphere = (radius: number) => {
+    const createSphere = (
+        radius: number,
+        mass: number,
+        x: number = 0,
+        z: number = 0
+    ) => {
         const geometry = new THREE.SphereGeometry(radius, 320, 160);
         const material = new THREE.MeshNormalMaterial();
         const mesh = new THREE.Mesh(geometry, material);
@@ -53,13 +59,20 @@ export default function scene(node: HTMLDivElement) {
         scene.add(mesh);
 
         const body = new CANNON.Body({
-            mass: 5,
+            mass,
             shape: new CANNON.Sphere(radius),
             material: sphereMaterial,
         });
-        body.position.set(0, 10, 0);
+        body.position.set(x, 10, z);
         world.addBody(body);
-        worldObjects.push({ mesh, body, id: 'sphere' });
+        const force1 = Math.random() > 0.5 ? Math.random() : Math.random() * -1;
+        const force2 = Math.random() > 0.5 ? Math.random() : Math.random() * -1;
+        worldObjects.push({
+            mesh,
+            body,
+            id: 'sphere',
+            force: [force1, force2],
+        });
     };
 
     const createGround = () => {
@@ -83,7 +96,7 @@ export default function scene(node: HTMLDivElement) {
         worldObjects.push({ mesh, body });
     };
 
-    createSphere(1);
+    createSphere(1, 5);
     createGround();
 
     // -------------- Lights -------------- //
@@ -104,7 +117,7 @@ export default function scene(node: HTMLDivElement) {
         worldObjects.forEach((obj) => {
             if (obj.id === 'sphere') {
                 obj.body.applyForce(
-                    new CANNON.Vec3(1, 0, 1),
+                    new CANNON.Vec3(obj.force![0], 0, obj.force![1]),
                     obj.body.position
                 );
             }
@@ -120,4 +133,14 @@ export default function scene(node: HTMLDivElement) {
         camera.updateProjectionMatrix();
     }
     window.addEventListener('resize', resize);
+
+    // -------------- Click Event -------------- //
+    function onClick() {
+        const radius = Math.random() + 0.5;
+        const mass = Math.random() * 5 + 0.5;
+        const x = Math.random() > 0.5 ? Math.random() : Math.random() * -1;
+        const z = Math.random() > 0.5 ? Math.random() : Math.random() * -1;
+        createSphere(radius, mass, x, z);
+    }
+    window.addEventListener('click', onClick);
 }
