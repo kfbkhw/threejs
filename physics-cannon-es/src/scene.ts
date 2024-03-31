@@ -103,6 +103,8 @@ export default function scene(node: HTMLDivElement) {
     const directionalLight = new THREE.DirectionalLight();
     directionalLight.position.set(0, 10, 0);
     directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.width = 4096;
+    directionalLight.shadow.mapSize.height = 4096;
     scene.add(directionalLight);
 
     const ambientLight = new THREE.AmbientLight();
