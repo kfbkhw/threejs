@@ -1,14 +1,19 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
 
 export default async function scene(node: HTMLDivElement, onLoad: () => void) {
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     node.appendChild(renderer.domElement);
 
-    const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
         75,
         window.innerWidth / window.innerHeight,
@@ -16,11 +21,24 @@ export default async function scene(node: HTMLDivElement, onLoad: () => void) {
         1000
     );
     camera.position.set(0, 50, 220);
+	
+    const scene = new THREE.Scene();
+    const textureCube = new THREE.CubeTextureLoader()
+        .setPath('./src/assets/textures/sky/')
+        .load([
+            'posx.jpg',
+            'negx.jpg',
+            'posy.jpg',
+            'negy.jpg',
+            'posz.jpg',
+            'negz.jpg',
+        ]);
+    scene.background = textureCube;
 
     const control = new OrbitControls(camera, renderer.domElement);
     control.enableDamping = true;
-    control.minDistance = 30;
-    control.maxDistance = 500;
+    control.minDistance = 100;
+    control.maxDistance = 400;
     control.minPolarAngle = Math.PI * 0.15;
     control.maxPolarAngle = Math.PI * 0.55;
     control.update();
@@ -38,18 +56,19 @@ export default async function scene(node: HTMLDivElement, onLoad: () => void) {
     };
 
     // -------------- Mesh Objects -------------- //
-    const planeGeometry = new THREE.PlaneGeometry(10000, 10000);
-    const planeMaterial = new THREE.MeshPhongMaterial({
-        color: 0x000000,
+    const geometry = new THREE.CircleGeometry(200, 320);
+    const material = new THREE.MeshPhongMaterial({
+        transparent: true,
+        opacity: 0.1,
     });
-    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-    plane.rotateX(-Math.PI / 2);
-    plane.position.setY(-75);
-    plane.receiveShadow = true;
-    scene.add(plane);
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.rotateX(-Math.PI / 2);
+    mesh.position.setY(-75);
+    mesh.receiveShadow = true;
+    scene.add(mesh);
 
     const gltf = await new GLTFLoader(loadingManager).loadAsync(
-        './src/models/amy.gltf'
+        './src/assets/models/amy.gltf'
     );
     const model = gltf.scene;
     model.traverse((obj) => {
@@ -59,27 +78,35 @@ export default async function scene(node: HTMLDivElement, onLoad: () => void) {
     });
     scene.add(model);
 
+    // -------------- Post Processing -------------- //
+    const composer = new EffectComposer(renderer);
+    const renderPass = new RenderPass(scene, camera);
+    composer.addPass(renderPass);
+    const outlinePass = new OutlinePass(
+        new THREE.Vector2(window.innerWidth, window.innerHeight),
+        scene,
+        camera
+    );
+    composer.addPass(outlinePass);
+    const shaderGamma = new ShaderPass(GammaCorrectionShader);
+    composer.addPass(shaderGamma);
+
     // -------------- Lights -------------- //
     const spotLight = new THREE.SpotLight(
         0xffffff,
-        60,
+        10,
         1000,
         Math.PI * 0.15,
         0.5,
         0.5
     );
-    spotLight.position.setY(150);
+    spotLight.position.set(0, 200, -10);
     spotLight.castShadow = true;
-    spotLight.shadow.mapSize.width = 1024;
-    spotLight.shadow.mapSize.height = 1024;
-    spotLight.shadow.radius = 2;
+    spotLight.shadow.mapSize.width = 4096;
+    spotLight.shadow.mapSize.height = 4096;
     scene.add(spotLight);
 
-    const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x333333);
-    hemisphereLight.position.set(0, -50, 10);
-    scene.add(hemisphereLight);
-
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 2);
     scene.add(ambientLight);
 
     // -------------- Animation Mixer -------------- //
@@ -135,7 +162,7 @@ export default async function scene(node: HTMLDivElement, onLoad: () => void) {
     function render() {
         const delta = clock.getDelta();
         requestAnimationFrame(render);
-        renderer.render(scene, camera);
+        composer.render();
         control.update();
         mixer.update(delta);
     }
@@ -159,13 +186,11 @@ export default async function scene(node: HTMLDivElement, onLoad: () => void) {
         const intersects = raycaster.intersectObjects(scene.children);
         const object = intersects[0]?.object as THREE.Mesh;
         if (targetObject) {
-            (targetObject.material as THREE.MeshStandardMaterial).color.set(
-                0xffffff
-            );
+            outlinePass.selectedObjects = [];
             targetObject = null;
         } else if (object?.name === 'Ch46') {
             targetObject = object;
-            (object.material as THREE.MeshStandardMaterial).color.set(0x5755fe);
+            outlinePass.selectedObjects = [object];
         }
     };
     window.addEventListener('pointerdown', onPointerDown);
